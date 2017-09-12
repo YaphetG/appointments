@@ -33,8 +33,13 @@ class DBTestCase(unittest.TestCase):
         assert resp.data== 'Hi world'
 
     def test_db_connection(self):
+
         assert mainappbp.connect_db(self.app) != None
 
+    def test_get_db_connxn(self):
+        with self.app.app_context():
+            connection = mainappbp.get_db(self.app)
+            assert g.sqlite_db == mainappbp.get_db(self.app)
 
 if __name__ == '__main__':
     unittest.main()
