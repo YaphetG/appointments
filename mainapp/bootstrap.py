@@ -20,12 +20,6 @@ app.config.update(dict(
 app.config.from_envvar('APP_CONFIG',silent = True)
 
 
-def init_db():
-    """Initializes the database."""
-    db = get_db()
-    with app.open_resource('database.sql', mode='r') as f:
-        db.cursor().executescript(f.read())
-    db.commit()
 
 
 def connect_db():
@@ -42,6 +36,12 @@ def get_db():
         g.sqlite_db = connect_db()
     return g.sqlite_db
 
+def init_db():
+    """Initializes the database."""
+    db = get_db()
+    with app.open_resource('database.sql', mode='r') as f:
+        db.cursor().executescript(f.read())
+    db.commit()
 
 #making sure everything is closed when app is destroyed
 @app.teardown_appcontext
@@ -49,3 +49,13 @@ def close_db(error):
     """Closes  the database connection"""
     if hasattr(g,'sqlite_db'):
         g.sqlite_db.close()
+
+
+@app.cli.command('initdb')
+def initdb_command():
+    """Initializes the database."""
+    init_db()
+
+@app.route('/')
+def show_entries():
+    return "Hi world"
