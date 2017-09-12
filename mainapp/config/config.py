@@ -18,3 +18,4 @@ class TestingConfig(BaseConfig):
     TESTING = True
     USERNAME = 'test'
     PASSWORD = 'default'
+    SECRET_KEY = "testingkey"
