@@ -15,6 +15,7 @@ def create_appointment():
     """
     validates incoming json data and saves
     """
+    print request.json
     if not request.json :
         abort(400)
     if not 'appointment_time' in request.json:

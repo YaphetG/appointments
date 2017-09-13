@@ -1,4 +1,4 @@
-from flask import Blueprint,current_app,g
+from flask import Blueprint,current_app,g, render_template
 import sqlite3
 
 main_app_bp = Blueprint('main_app_bp',__name__)
@@ -27,7 +27,6 @@ def init_db(app):
     db = get_db(app)
     with current_app.open_resource('database.sql', mode='r') as f:
         db.cursor().executescript(f.read())
-
     db.commit()
 
 
@@ -35,4 +34,4 @@ def init_db(app):
 
 @main_app_bp.route('/')
 def index():
-    return "Hi world"
+    return render_template('appointment/index.html')

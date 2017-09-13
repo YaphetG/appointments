@@ -101,7 +101,7 @@ class RestTestCase(unittest.TestCase):
             response = self.test_client.get('/api/v1.0/'+keyword)
             assert response.status_code == 200
             assert response.content_type == "application/json"
-            data = json.loads(response.data)            
+            data = json.loads(response.data)
             assert len(data) == 1
             assert data[0]['id'] == '1'
 
