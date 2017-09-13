@@ -5,11 +5,13 @@ from flask import Flask,g,current_app
 from config.config import DevelopmentConfig
 
 from .blueprints import mainappbp
+from .blueprints import restEndPointsbp
 
 
 
 def register_blueprints(app):
     app.register_blueprint(mainappbp.main_app_bp)
+    app.register_blueprint(restEndPointsbp.rest_end_point_bp,url_prefix="/api/v1.0")
 
 #making sure everything is closed when app is destroyed
 def create_teardown_context(app):

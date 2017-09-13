@@ -14,9 +14,7 @@ from flask import g
 class DBTestCase(unittest.TestCase):
     def setUp(self):
         #set up test with temp db file
-        self.app = bootstrap.create_app(TestingConfig)
-        #override with testing config
-        self.app.config.from_object(TestingConfig)
+        self.app = bootstrap.create_app(TestingConfig)        
         self.file_handle , self.app.config['DATABASE'] = tempfile.mkstemp()
         self.app.testing = True
         self.test_client =self.app.test_client()
@@ -28,9 +26,6 @@ class DBTestCase(unittest.TestCase):
         os.close(self.file_handle)
         os.unlink(self.app.config['DATABASE'])
 
-    def test_root_url(self):
-        resp = self.test_client.get('/')
-        assert resp.data== 'Hi world'
 
     def test_db_connection(self):
 

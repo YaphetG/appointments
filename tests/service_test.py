@@ -2,8 +2,6 @@ import sys
 sys.path.append('../')
 import os
 import tempfile
-
-import time
 import unittest
 
 from mainapp import run as bootstrap
@@ -12,13 +10,16 @@ from mainapp.config.config import TestingConfig
 from flask import g
 from mainapp.services import appointmentservice as service
 from mainapp.models.models import Appointment
+from mainapp.utils import utils
 import datetime
+
+
+
+
 class ServicesTestCase(unittest.TestCase):
     def setUp(self):
         #set up test with temp db file
         self.app = bootstrap.create_app(TestingConfig)
-        #override with testing config
-        self.app.config.from_object(TestingConfig)
         self.file_handle , self.app.config['DATABASE'] = tempfile.mkstemp()
         self.app.testing = True
         self.test_client =self.app.test_client()
@@ -29,6 +30,7 @@ class ServicesTestCase(unittest.TestCase):
     def tearDown(self):
         os.close(self.file_handle)
         os.unlink(self.app.config['DATABASE'])
+
 
     def test_add_appointment_happyday(self):
         with self.app.app_context():
@@ -42,7 +44,7 @@ class ServicesTestCase(unittest.TestCase):
             result = cursor.execute("SELECT * from tbl_appointments").fetchone()
             assert result[0] == 1
             # '2017-10-21 12:00:00'
-            assert result[1] == date.strftime('%Y-%m-%d %H:%M:%S')
+            assert result[1] == date.strftime(utils.SQL_DATE_TIME_FORMAT)
 
             assert result[2] == "Birthday"
 
@@ -51,46 +53,67 @@ class ServicesTestCase(unittest.TestCase):
         date = datetime.datetime(2017,10,21,12,00)
         self.assertRaises(RuntimeError,service.add_appointment,Appointment(None,date,"desc"))
 
+
     def test_add_appointment_with_null(self):
         with self.app.app_context():
             appointment = Appointment(None,None,None)
             self.assertRaises(ValueError,service.add_appointment,appointment)
 
 
-
-    def test_get_appointment_with_values(self):
+    def test_get_all_appointment_db_with_values(self):
         with self.app.app_context():
             db =  mainappbp.get_db(self.app)
-            cursor = db.cursor()
-            query = """INSERT INTO tbl_appointments (appointment_time, description ) VALUES
-                ('2017-09-13 08:08:00','inserting data'),
-                ('2017-09-13 08:08:30','another appointment')
-                """
-            cursor.execute(query)
+            self.insert_sample(db)
 
             expected = [{
-                'id' : 1,
-                'time': time.strptime('2017-09-13 08:08:00','%Y-%m-%d %H:%M:%S'),
-                'desc': 'inserting data'
+                'time': utils.format_date('2017-09-13 08:08:00'),
+                'desc': 'inserting data #tag'
                 },
                 {
-                'id' : 2,
-                'time': time.strptime('2017-09-13 08:08:30','%Y-%m-%d %H:%M:%S'),
-                'desc': 'another appointment'
+                'time': utils.format_date('2017-09-13 08:08:30'),
+                'desc': 'another appointment #tag'
                 }
                 ]
-            db.commit()
+
             #should return all the rows converted to appointments model
             result_set = service.get_all_appointments()
-            i=0
-            for ex,result in map(expected,result_set):
-                assert ex.id == result.id
-                assert ex.time == result.appointment_time
-                assert ex.desc == result.description
+
+            for ex,result in zip(expected,result_set):
+                assert ex['time'] == result.appointment_time
+                assert ex['desc'] == result.description
 
 
-    def test_get_appointment_empty(self):
-        pass
+    def test_get_all_appointment_db_empty(self):
+        with self.app.app_context():
+            assert service.get_all_appointments()== []
+
+
+    def test_find_appointment_by_desc_exists(self):
+        with self.app.app_context():
+            db = mainappbp.get_db(self.app)
+            self.insert_sample(db)
+            only_one = service.find_by_description("ins")
+            two = service.find_by_description("#tag")
+            assert len(only_one) == 1
+            assert len(two) == 2
+
+
+    def test_find_appointment_by_desc_not_found(self):
+        with self.app.app_context():
+            db = mainappbp.get_db(self.app)
+            self.insert_sample(db)
+            rs = service.find_by_description("%")
+            assert service.find_by_description("%") == []
+
+
+    def insert_sample(self,db):
+        query = """INSERT INTO tbl_appointments (appointment_time, description ) VALUES
+            ('2017-09-13 08:08:00','inserting data #tag'),
+            ('2017-09-13 08:08:30','another appointment #tag')
+            """
+        db.cursor().execute(query)
+        db.commit()
+
 
 if __name__ == '__main__':
     unittest.main()
